@@ -377,13 +377,6 @@ QTC:SetScript("OnEvent", function(self)
 		end
 		self:CreateButtons()
 
-		self:ClearAllPoints()
-		if cfg.GrowUpward then
-			self:SetPoint("BOTTOMLEFT", anchor)
-		else
-			self:SetPoint("TOPLEFT", anchor)
-		end
-
 		toggler:SetAttribute("OnCombat", cfg.CollapseInCombat)
 
 		QuickTalentsBackground:SetColorTexture(0, 0, 0, cfg.BackgroundAlpha / 100)
