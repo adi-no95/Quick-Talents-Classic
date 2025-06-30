@@ -80,11 +80,12 @@ QTC:SetScript("OnEvent", function(self)
 	end)
 
 	self:CreateTexture("QuickTalentsBackground"):SetAllPoints()
-	self:CreateFontString("QuickTalentsReagents"):SetFont("Fonts\\ARIALN.TTF", 13, "OUTLINE")
-	QuickTalentsReagents:SetPoint("TOPLEFT", 4, -2)
+	self:CreateFontString("QuickTalentsReagents"):SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
 	local toggler =
 		CreateFrame("BUTTON", "QuickTalentsToggle", self, "SecureHandlerClickTemplate,SecureHandlerStateTemplate")
+	local ConfigButton = CreateFrame("BUTTON", "QuickTalentsConfigButton", self)
+
 	toggler:SetAttribute(
 		"UpdateDisplay",
 		[[
@@ -97,7 +98,7 @@ QTC:SetScript("OnEvent", function(self)
 						f:Hide()
 					else
 						f:Show()
-						y = max(y,-select(5,f:GetPoint())+28);
+						y = max(y,math.abs(select(5,f:GetPoint()))+28);
 					end
 				end
 			end
@@ -131,7 +132,6 @@ QTC:SetScript("OnEvent", function(self)
 
 	local togglerSize = 14
 	toggler:SetSize(togglerSize, togglerSize)
-	toggler:SetPoint("TOPRIGHT", -2, -2)
 	toggler:SetScript("OnEnter", function(self)
 		self:SetAlpha(1)
 	end)
@@ -263,16 +263,42 @@ QTC:SetScript("OnEvent", function(self)
 
 	local buttons = {}
 
+	local mapping = {
+		16,
+		17,
+		18, -- 1-3
+		13,
+		14,
+		15, -- 4-6
+		10,
+		11,
+		12, -- 7-9
+		7,
+		8,
+		9, -- 10-12
+		4,
+		5,
+		6, -- 13-15
+		1,
+		2,
+		3, -- 16-18
+	}
+
 	local function SetButtonPosition(btn, i)
+		local j = i
+		if cfg.GrowUpward and i <= 18 then
+			j = mapping[i]
+		end
+
 		local point = "TOPLEFT"
-		local relativePoint = -(ceil(i / 3) * 28) + 8
+		local relativePoint = -(ceil(j / 3) * 28) + 8
 		if cfg.GrowUpward then
 			point = "BOTTOMLEFT"
 			relativePoint = -1 * relativePoint
 		end
 
 		btn:ClearAllPoints()
-		btn:SetPoint(point, ((i - 1) % 3) * 28 + 2, relativePoint)
+		btn:SetPoint(point, ((j - 1) % 3) * 28 + 2, relativePoint)
 	end
 
 	-- Create Buttons
@@ -377,6 +403,22 @@ QTC:SetScript("OnEvent", function(self)
 		end
 		self:CreateButtons()
 
+		self:ClearAllPoints()
+		toggler:ClearAllPoints()
+		ConfigButton:ClearAllPoints()
+		QuickTalentsReagents:ClearAllPoints()
+		if cfg.GrowUpward then
+			self:SetPoint("BOTTOMLEFT", anchor)
+			toggler:SetPoint("BOTTOMRIGHT", -2, 2)
+			ConfigButton:SetPoint("BOTTOMRIGHT", -20, 2)
+			QuickTalentsReagents:SetPoint("BOTTOMLEFT", 4, 2)
+		else
+			self:SetPoint("TOPLEFT", anchor)
+			toggler:SetPoint("TOPRIGHT", -2, -2)
+			ConfigButton:SetPoint("TOPRIGHT", -20, -2)
+			QuickTalentsReagents:SetPoint("TOPLEFT", 4, -2)
+		end
+
 		toggler:SetAttribute("OnCombat", cfg.CollapseInCombat)
 
 		QuickTalentsBackground:SetColorTexture(0, 0, 0, cfg.BackgroundAlpha / 100)
@@ -396,8 +438,7 @@ QTC:SetScript("OnEvent", function(self)
 			else
 				btn:Show()
 				btn:SetAttribute("used", true)
-				y = max(y, -select(5, btn:GetPoint()) + 28)
-
+				y = max(y, math.abs(select(5, btn:GetPoint())) + 28)
 				if i <= 18 then -- talents
 					local tier, column = GetTalentPosition(i)
 					local talentInfo = GetTalentInfo(tier, column)
@@ -548,9 +589,7 @@ QTC:SetScript("OnEvent", function(self)
 		end
 	end
 
-	local ConfigButton = CreateFrame("BUTTON", "QuickTalentsConfigButton", self)
 	ConfigButton:SetSize(14, 14)
-	ConfigButton:SetPoint("TOPRIGHT", -20, -2)
 	ConfigButton:SetScript("OnClick", ToggleConfig)
 	ConfigButton:SetScript("OnEnter", function(self)
 		self:SetAlpha(1)
