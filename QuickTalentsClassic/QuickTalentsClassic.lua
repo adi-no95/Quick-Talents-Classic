@@ -47,11 +47,12 @@ QTC:SetScript("OnEvent", function(self)
 		BackgroundAlpha = 50,
 		ShowGlyphs = true,
 		GlyphHistorySize = 3,
-		Position = { "TOP" },
+		Position = { "CENTER" },
 		Bindings = {},
 		GlyphHistory = {},
 		Collapsed = false,
 		CollapseInCombat = false,
+		GrowUpward = false,
 	}
 	QT_Saved = QT_Saved or settings
 	local cfg = QT_Saved
@@ -260,8 +261,21 @@ QTC:SetScript("OnEvent", function(self)
 		end
 	end
 
-	-- Create Buttons
 	local buttons = {}
+
+	local function SetButtonPosition(btn, i)
+		local point = "TOPLEFT"
+		local relativePoint = -(ceil(i / 3) * 28) + 8
+		if cfg.GrowUpward then
+			point = "BOTTOMLEFT"
+			relativePoint = -1 * relativePoint
+		end
+
+		btn:ClearAllPoints()
+		btn:SetPoint(point, ((i - 1) % 3) * 28 + 2, relativePoint)
+	end
+
+	-- Create Buttons
 	function self:CreateButtons()
 		if InCombatLockdown() then
 			return
@@ -271,7 +285,8 @@ QTC:SetScript("OnEvent", function(self)
 				local btn = CreateFrame("BUTTON", "QuickTalentsButton" .. i, self, "SecureActionButtonTemplate")
 				btn:SetAttribute("type1", "macro")
 				btn:SetSize(26, 26)
-				btn:SetPoint("TOPLEFT", ((i - 1) % 3) * 28 + 2, -(ceil(i / 3) * 28) + 8)
+
+				SetButtonPosition(btn, i)
 
 				btn.texture = btn:CreateTexture(nil, "BACKGROUND")
 				btn.texture:SetAllPoints()
@@ -349,6 +364,8 @@ QTC:SetScript("OnEvent", function(self)
 					end)
 				end
 				buttons[i] = btn
+			else
+				SetButtonPosition(buttons[i], i)
 			end
 		end
 	end
@@ -359,6 +376,13 @@ QTC:SetScript("OnEvent", function(self)
 			return
 		end
 		self:CreateButtons()
+
+		self:ClearAllPoints()
+		if cfg.GrowUpward then
+			self:SetPoint("BOTTOMLEFT", anchor)
+		else
+			self:SetPoint("TOPLEFT", anchor)
+		end
 
 		toggler:SetAttribute("OnCombat", cfg.CollapseInCombat)
 
@@ -457,7 +481,7 @@ QTC:SetScript("OnEvent", function(self)
 			QuickTalentsConfig:SetShown(not QuickTalentsConfig:IsShown())
 		else
 			local window = CreateFrame("FRAME", "QuickTalentsConfig", UIParent)
-			window:SetSize(300, 180)
+			window:SetSize(300, 190)
 			window:SetPoint("CENTER")
 			window:EnableMouse(true)
 			window:SetMovable(true)
@@ -481,7 +505,7 @@ QTC:SetScript("OnEvent", function(self)
 			cross:SetPoint("CENTER")
 			cross:SetText("X")
 
-			for i, name in pairs({ "ShowTooltips", "ShowGlyphs", "CollapseInCombat" }) do
+			for i, name in pairs({ "ShowTooltips", "ShowGlyphs", "CollapseInCombat", "GrowUpward" }) do
 				local cb = CreateFrame("CheckButton", nil, window, "UICheckButtonTemplate")
 				cb:SetPoint("TOPLEFT", 10, 10 - (i * 20))
 				--cb:SetHitRectInsets(0,-60,0,0);
@@ -493,7 +517,7 @@ QTC:SetScript("OnEvent", function(self)
 				end)
 			end
 
-			local y = -100
+			local y = -110
 			for name, v in pairs({
 				Scale = { 20, 300 },
 				BackgroundAlpha = { 0, 100 },
