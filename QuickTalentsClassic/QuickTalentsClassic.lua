@@ -30,16 +30,6 @@ QTC:SetScript("OnEvent", function(self)
 		C_AddOns.LoadAddOn("Blizzard_TalentUI")
 	end)
 
-	local isBeta = string.find(string.lower(select(1, GetRealmName())), "beta") ~= nil
-	if isBeta then
-		DEFAULT_CHAT_FRAME:AddMessage(
-			"|cff00ff00[QuickTalentsClassic]|r Click |Hqtad:1|h|cff00ccff[ >>here<< ]|r|h to advertise the addon! <3",
-			1,
-			1,
-			0
-		)
-	end
-
 	-- Load/Validate Settings
 	local settings = {
 		Scale = 100,
@@ -327,8 +317,8 @@ QTC:SetScript("OnEvent", function(self)
 						GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 						if btn.glyphID then
 							GameTooltip:SetSpellByID(btn.glyphID)
-						elseif btn.telantID then
-							GameTooltip:SetTalent(btn.telantID)
+						elseif btn.talentID then
+							GameTooltip:SetTalent(btn.talentID)
 						end
 						GameTooltip:Show()
 					end
@@ -338,24 +328,23 @@ QTC:SetScript("OnEvent", function(self)
 				if i <= 18 then -- talents
 					local tier, column = GetTalentPosition(i)
 					local talentInfo = GetTalentInfo(tier, column) or {}
-					btn.telantID = talentInfo.talentID or {}
+					btn.talentID = talentInfo.talentID or {}
 					btn:SetAttribute(
 						"macrotext",
 						"/stopmacro [combat]\n"
-							--.. "/click QuickTalentsOpener\n" -- ensures the talent frame is ready for interactionType
 							.. "/run C()S()R()\n"
 							.. "/click [spec:1]PlayerSpecTab1;[spec:2]PlayerSpecTab2\n"
 							.. "/click PlayerTalentFrameTab2\n"
 							.. format("/click PlayerTalentFrameTalentsTalentRow%dTalent%d\n", tier, column)
 							.. "/click StaticPopup1Button1\n" -- confirm unlearn (TODO: what if popup1 is not the talent prompt)
-							.. "/click PlayerTalentFrameTalentsLearnButton\n"
+							--.. "/click PlayerTalentFrameTalentsLearnButton\n"
+							.. format("/run L(%d)\n", i) -- queue new talents for learn
 							.. "/run H()\n"
-							.. format("/run L(%d)", i) -- queue new talents for learn
 					)
 					btn:RegisterForDrag("LeftButton")
 					btn:SetScript("OnDragStart", function()
 						if not InCombatLockdown() then
-							--PickupTalent(btn.telantID)
+							--PickupTalent(btn.talentID)
 							local tier, column = GetTalentPosition(i)
 							local talentInfo = GetTalentInfo(tier, column)
 							PickupSpell(talentInfo.spellID)
@@ -675,40 +664,4 @@ QTC:SetScript("OnEvent", function(self)
 	QuickTalentsBinder:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 	QuickTalentsBinder:RegisterEvent("LEARNED_SPELL_IN_TAB")
 	QuickTalentsBinder:SetScript("OnEvent", QuickTalentsBinder.OnEvent)
-
-	if isBeta then
-		-- Only register once!
-		if not QuickTalentsClassic_SetItemRef_Hooked then
-			local orig_SetItemRef = SetItemRef
-
-			function SetItemRef(link, text, button, chatFrame)
-				if link:sub(1, 5) == "qtad:" then
-					-- You can show a popup, or do something else here
-					-- You CANNOT send a chat message directly from here (protected)
-					StaticPopup_Show("QT_ADVERTISE_CONFIRM")
-					return
-				end
-				orig_SetItemRef(link, text, button, chatFrame)
-			end
-			QuickTalentsClassic_SetItemRef_Hooked = true
-		end
-
-		-- Register a popup for confirmation
-		StaticPopupDialogs["QT_ADVERTISE_CONFIRM"] = {
-			text = "Do you want to advertise Quick Talents Classic in channel 1?",
-			button1 = "Yes",
-			button2 = "No",
-			OnAccept = function()
-				SendChatMessage(
-					"Try Quick Talents Classic addon! Instantly swap talents with one click! =)",
-					"CHANNEL",
-					nil,
-					1
-				)
-			end,
-			timeout = 0,
-			whileDead = true,
-			hideOnEscape = true,
-		}
-	end
 end)
