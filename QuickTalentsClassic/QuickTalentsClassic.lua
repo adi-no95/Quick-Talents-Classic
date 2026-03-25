@@ -168,21 +168,25 @@ QTC:SetScript("OnEvent", function(self)
 	CreateFrame("BUTTON", "QuickTalentsOpener", self, "SecureActionButtonTemplate"):SetAttribute("type", "macro")
 	QuickTalentsOpener:SetAttribute(
 		"macrotext",
-		"/run PlayerTalentFrame:Show()\n"
+		"/run S()\n"
 			.. "/click [spec:1]PlayerSpecTab1;[spec:2]PlayerSpecTab2\n"
 			.. "/click PlayerTalentFrameTab3\n"
 			.. "/click PlayerTalentFrameTab2\n"
-			.. "/run PlayerTalentFrame:Hide()"
+			.. "/run H()"
 	)
 
 	-- PlayerTalentFrame:Show()
 	function S()
-		PlayerTalentFrame:Show()
+		if not PlayerTalentFrame:IsShown() then
+			PlayerTalentFrame:Show()
+		end
 	end
 
 	-- PlayerTalentFrame:Hide()
 	function H()
-		PlayerTalentFrame:Hide()
+		if PlayerTalentFrame:IsShown() then
+			PlayerTalentFrame:Hide()
+		end
 	end
 
 	-- PlayerTalentFrame_Close()
@@ -344,7 +348,7 @@ QTC:SetScript("OnEvent", function(self)
 				elseif i <= 21 then -- glyphs slots
 					btn:SetAttribute(
 						"macrotext",
-						format("/click GlyphFrameGlyph%d\n/click StaticPopup1Button1\n", (i - 18) * 2) .. "/run H()"
+						format("/click GlyphFrameGlyph%d\n/click StaticPopup1Button1\n", (i - 18) * 2)
 					)
 					btn.ring = btn:CreateTexture(nil, "ARTWORK")
 					btn.ring:SetTexture("Interface/TalentFrame/talent-main")
@@ -353,6 +357,9 @@ QTC:SetScript("OnEvent", function(self)
 					btn.ring:SetTexCoord(0.50000000, 0.91796875, 0.00195313, 0.21093750)
 					btn.texture:SetTexCoord(0, 1, 0, 1)
 					btn.selected = true
+					btn:SetScript("PostClick", function(self)
+						C()
+					end)
 				else -- glyph history
 					btn:SetAlpha(0.25)
 					btn:RegisterForClicks("RightButtonUp", "LeftButtonDown")
@@ -363,6 +370,10 @@ QTC:SetScript("OnEvent", function(self)
 							GlyphHistory[j] = GlyphHistory[j + 1]
 						end
 						self:Update()
+					end)
+
+					btn:SetScript("PostClick", function(self)
+						C()
 					end)
 				end
 
