@@ -1,7 +1,9 @@
 ----------------------------------------------------------------------------------------------------------------------------------
 -- QuickTalentsClassic
 ----------------------------------------------------------------------------------------------------------------------------------
-CreateFrame("Frame", "QTC", UIParent):RegisterEvent("ADDON_LOADED")
+CreateFrame("Frame", "QTC", UIParent):RegisterEvent("PLAYER_LOGIN")
+
+C_AddOns.LoadAddOn("Blizzard_TalentUI")
 local GetSpecialization = C_SpecializationInfo.GetActiveSpecGroup
 
 -- Helper function to get talent info
@@ -25,11 +27,6 @@ local function GetTalentPosition(talentNum)
 end
 
 QTC:SetScript("OnEvent", function(self)
-	self:UnregisterEvent("ADDON_LOADED")
-	C_Timer.After(0.1, function()
-		C_AddOns.LoadAddOn("Blizzard_TalentUI")
-	end)
-
 	-- Load/Validate Settings
 	local settings = {
 		Scale = 100,
@@ -312,23 +309,13 @@ QTC:SetScript("OnEvent", function(self)
 					GameTooltip:Hide()
 					btn:SetAlpha(btn.selected and 1 or 0.25)
 				end)
-				btn:SetScript("OnEnter", function(btn)
-					if cfg.ShowTooltips then
-						GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-						if btn.glyphID then
-							GameTooltip:SetSpellByID(btn.glyphID)
-						elseif btn.talentID then
-							GameTooltip:SetTalent(btn.talentID)
-						end
-						GameTooltip:Show()
-					end
-					btn:SetAlpha(btn.selected and 1 or 0.5)
-				end)
 
 				if i <= 18 then -- talents
 					local tier, column = GetTalentPosition(i)
-					local talentInfo = GetTalentInfo(tier, column) or {}
-					btn.talentID = talentInfo.talentID or {}
+					local talentInfo = GetTalentInfo(tier, column)
+					if talentInfo then
+						btn.talentID = talentInfo.talentID
+					end
 					btn:SetAttribute(
 						"macrotext",
 						"/stopmacro [combat]\n"
@@ -378,6 +365,20 @@ QTC:SetScript("OnEvent", function(self)
 						self:Update()
 					end)
 				end
+
+				btn:SetScript("OnEnter", function(btn)
+					if cfg.ShowTooltips then
+						GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+						if btn.glyphID then
+							GameTooltip:SetSpellByID(btn.glyphID)
+						elseif btn.talentID then
+							GameTooltip:SetTalent(btn.talentID)
+						end
+						GameTooltip:Show()
+					end
+					btn:SetAlpha(btn.selected and 1 or 0.5)
+				end)
+
 				buttons[i] = btn
 			else
 				SetButtonPosition(buttons[i], i)
@@ -470,8 +471,8 @@ QTC:SetScript("OnEvent", function(self)
 		self:SetHeight(y)
 	end
 
-	self:RegisterEvent("PLAYER_TALENT_UPDATE")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("PLAYER_TALENT_UPDATE")
 	self:RegisterEvent("BAG_UPDATE_DELAYED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
